@@ -1,4 +1,4 @@
-import StatsCards from '../../components/dashboard/StatCards';
+import StatsCards from '../../components/dashboard/StatsCards';
 import { useAuthStore } from '../../store/slices/authSlice';
 import { Link } from 'react-router-dom';
 

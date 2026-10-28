@@ -6,7 +6,7 @@ import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import CasesPage from './pages/dashboard/CasesPage';
 import UsersPage from './pages/dashboard/UsersPage';
-
+import ReportsPage from './pages/dashboard/ReportsPage'; // <-- Make sure this is imported
 
 const queryClient = new QueryClient();
 
@@ -22,9 +22,11 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/cases" element={<ProtectedRoute><CasesPage /></ProtectedRoute>} />
+          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
+          {/* Add this line below! */}
+          <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>

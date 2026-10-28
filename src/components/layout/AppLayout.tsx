@@ -11,6 +11,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { label: 'Dashboard', path: '/dashboard', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'] },
     { label: 'Cases', path: '/cases', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'] },
+    { label: 'Reports', path: '/reports', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER'] }, // Analysts don't usually see reports
     { label: 'Manage Users', path: '/users', roles: ['ORG_ADMIN', 'SUPERADMIN'] },
   ];
 
