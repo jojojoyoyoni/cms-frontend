@@ -11,11 +11,20 @@ export const createCase = async (caseData: { title: string; description: string;
   return response.data;
 };
 
-export const updateCase = async (id: string, caseData: { title: string; description: string; status: string }): Promise<Case> => {
-  const response = await client.put(`/cases/${id}`, caseData);
+// export const updateCase = async (id: string, caseData: { title: string; description: string; status: string }): Promise<Case> => {
+//   const response = await client.put(`/cases/${id}`, caseData);
+//   return response.data;
+// };
+
+// export const deleteCase = async (id: string): Promise<void> => {
+//   await client.delete(`/cases/${id}`);
+// };
+
+export const updateCase = async (id: number, caseData: Partial<Case>): Promise<Case> => {
+  const response = await client.patch(`/cases/${id}/`, caseData);
   return response.data;
 };
 
-export const deleteCase = async (id: string): Promise<void> => {
-  await client.delete(`/cases/${id}`);
+export const deleteCase = async (id: number): Promise<void> => {
+  await client.delete(`/cases/${id}/`);
 };

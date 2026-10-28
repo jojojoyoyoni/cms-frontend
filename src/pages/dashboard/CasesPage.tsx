@@ -1,17 +1,38 @@
 import { useState } from 'react';
-import { useCases, useCreateCase } from '../../api/hooks/useCases';
+import { useCases, useCreateCase, useUpdateCase, useDeleteCase  } from '../../api/hooks/useCases';
 import { useAuditLogs } from '../../api/hooks/useAudits';
+import type { Case } from '../../types/case';
+
 
 export default function CasesPage() {
   const { data: cases, isLoading, isError } = useCases();
   const createCaseMutation = useCreateCase();
+  const updateCaseMutation = useUpdateCase();
+  const deleteCaseMutation = useDeleteCase();
   
   const [historyCaseId, setHistoryCaseId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({ title: '', description: '', status: 'OPEN' });
+  const [editingCase, setEditingCase] = useState<Case | null>(null);
+  const [deleteCaseId, setDeleteCaseId] = useState<number | null>(null);
+  const [formData, setFormData] = useState({ title: '', description: '', status: 'OPEN', priority: 'MEDIUM', due_date: '' });
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const openEditModal = (caseItem: Case) => {
+    setEditingCase(caseItem);
+    // Format due_date for datetime-local input
+    const dueDate = caseItem.due_date ? new Date(caseItem.due_date).toISOString().slice(0, 16) : '';
+    setFormData({
+      title: caseItem.title,
+      description: caseItem.description || '',
+      status: caseItem.status,
+      priority: caseItem.priority,
+      due_date: dueDate
+    });
+    setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,9 +40,17 @@ export default function CasesPage() {
     createCaseMutation.mutate(formData, {
       onSuccess: () => {
         setIsModalOpen(false);
-        setFormData({ title: '', description: '', status: 'OPEN' });
+        setFormData({ title: '', description: '', status: 'OPEN', priority: 'MEDIUM', due_date: '' });
       }
     });
+  };
+
+  const handleDelete = () => {
+    if (deleteCaseId) {
+      deleteCaseMutation.mutate(deleteCaseId, {
+        onSuccess: () => setDeleteCaseId(null)
+      });
+    }
   };
 
   if (isLoading) return <div className="animate-pulse text-gray-500">Loading cases...</div>;
@@ -37,24 +66,33 @@ export default function CasesPage() {
         >
           + New Case
         </button>
-      </div>
-
+      </div>    
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Case #</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
-            {/* Added Actions Header */}
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {cases?.map(caseItem => (
             <tr key={caseItem.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{caseItem.id}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{caseItem.case_number}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{caseItem.title}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  caseItem.priority === 'CRITICAL' ? 'bg-red-100 text-red-800' :
+                  caseItem.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
+                  caseItem.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {caseItem.priority}
+                </span>
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                   caseItem.status === 'OPEN' ? 'bg-blue-100 text-blue-800' : 
@@ -65,84 +103,95 @@ export default function CasesPage() {
                 </span>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {new Date(caseItem.created_at).toLocaleDateString()}
+                {caseItem.due_date ? new Date(caseItem.due_date).toLocaleDateString() : 'N/A'}
               </td>
-              {/* Moved History button to its own column */}
-              <td className="px-6 py-4 whitespace-nowrap text-sm">
+              <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
                 <button 
                   onClick={() => setHistoryCaseId(caseItem.id)}
                   className="text-blue-600 hover:text-blue-800 text-xs font-medium"
                 >
                   History
                 </button>
+                <button 
+                  onClick={() => openEditModal(caseItem)}
+                  className="text-gray-600 hover:text-gray-800 text-xs font-medium"
+                >
+                  Edit
+                </button>
+                <button 
+                  onClick={() => setDeleteCaseId(caseItem.id)}
+                  className="text-red-600 hover:text-red-800 text-xs font-medium"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-
-
-      {/* Create Case Modal */}
+      {/* Create/Edit Case Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-6 w-96">
-            <h3 className="text-lg font-bold mb-4">Create New Case</h3>
+            <h3 className="text-lg font-bold mb-4">{editingCase ? 'Edit Case' : 'Create New Case'}</h3>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Title</label>
-                <input 
-                  type="text" 
-                  name="title" 
-                  value={formData.title} 
-                  onChange={handleInputChange} 
-                  className="w-full p-2 border rounded" 
-                  required 
-                />
+                <input type="text" name="title" value={formData.title} onChange={handleInputChange} className="w-full p-2 border rounded" required />
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Description</label>
-                <textarea 
-                  name="description" 
-                  value={formData.description} 
-                  onChange={handleInputChange} 
-                  className="w-full p-2 border rounded h-24" 
-                />
+                <textarea name="description" value={formData.description} onChange={handleInputChange} className="w-full p-2 border rounded h-24" />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Priority</label>
+                <select name="priority" value={formData.priority} onChange={handleInputChange} className="w-full p-2 border rounded">
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
               </div>
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Status</label>
-                <select 
-                  name="status" 
-                  value={formData.status} 
-                  onChange={handleInputChange} 
-                  className="w-full p-2 border rounded"
-                >
+                <select name="status" value={formData.status} onChange={handleInputChange} className="w-full p-2 border rounded">
                   <option value="OPEN">Open</option>
                   <option value="IN_PROGRESS">In Progress</option>
                   <option value="CLOSED">Closed</option>
                 </select>
               </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">Due Date</label>
+                <input type="datetime-local" name="due_date" value={formData.due_date} onChange={handleInputChange} className="w-full p-2 border rounded" />
+              </div>
               
-              {createCaseMutation.isError && (
-                <p className="text-red-500 text-sm mb-4">Error creating case. Make sure you are assigned to an Organization.</p>
+              {(createCaseMutation.isError || updateCaseMutation.isError) && (
+                <p className="text-red-500 text-sm mb-4">Error saving case.</p>
               )}
 
               <div className="flex justify-end gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit" 
-                  className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
-                  disabled={createCaseMutation.isPending}
-                >
-                  {createCaseMutation.isPending ? 'Saving...' : 'Save Case'}
+                <button type="button" onClick={() => setIsModalOpen(false)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-300">Cancel</button>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700" disabled={createCaseMutation.isPending || updateCaseMutation.isPending}>
+                  {(createCaseMutation.isPending || updateCaseMutation.isPending) ? 'Saving...' : 'Save Case'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteCaseId && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96 text-center">
+            <h3 className="text-lg font-bold mb-4">Delete Case?</h3>
+            <p className="text-sm text-gray-500 mb-6">This case will be hidden from the system but kept in the database for compliance audit purposes.</p>
+            <div className="flex justify-center gap-2">
+              <button type="button" onClick={() => setDeleteCaseId(null)} className="bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm hover:bg-gray-300">Cancel</button>
+              <button onClick={handleDelete} className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700" disabled={deleteCaseMutation.isPending}>
+                {deleteCaseMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
