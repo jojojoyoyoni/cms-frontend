@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/slices/authSlice';
+import { WebSocketProvider } from './context/WebSocketContext';
 import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -8,7 +9,6 @@ import CasesPage from './pages/dashboard/CasesPage';
 import UsersPage from './pages/dashboard/UsersPage';
 import ReportsPage from './pages/dashboard/ReportsPage'; 
 import CaseDetailPage from './pages/dashboard/CaseDetailPage';
-
 
 const queryClient = new QueryClient();
 
@@ -22,6 +22,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+      {/* WebSocketProvider MUST wrap the Routes */}
+      <WebSocketProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -32,6 +34,7 @@ export default function App() {
           <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
+      </WebSocketProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
