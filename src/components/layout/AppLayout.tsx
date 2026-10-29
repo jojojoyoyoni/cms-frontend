@@ -9,10 +9,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   const navItems = [
-    { label: 'Dashboard', path: '/dashboard', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'] },
-    { label: 'Cases', path: '/cases', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'] },
-    { label: 'Reports', path: '/reports', roles: ['SUPERADMIN', 'ORG_ADMIN', 'TEAM_LEADER'] },
-    { label: 'Manage Users', path: '/users', roles: ['ORG_ADMIN', 'SUPERADMIN'] },
+    // Super Admin sees only Platform Management
+    { label: 'Organizations', path: '/organizations', roles: ['SUPERADMIN'], icon: '🏛️' },
+    { label: 'Manage Users', path: '/users', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '👥' },
+    { label: 'Audit Logs', path: '/audits', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '📜' },
+    
+    // Org Admin, Team Leader, Analyst see operational links
+    { label: 'Dashboard', path: '/dashboard', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '🏠' },
+    { label: 'Cases', path: '/cases', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '📁' },
+    { label: 'Reports', path: '/reports', roles: ['ORG_ADMIN', 'TEAM_LEADER'], icon: '📊' },
   ];
 
   const handleLogout = () => {

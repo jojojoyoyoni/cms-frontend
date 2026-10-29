@@ -5,6 +5,7 @@ export interface User {
   role: 'SUPERADMIN' | 'ORG_ADMIN' | 'TEAM_LEADER' | 'ANALYST';
   organization?: { id: number; name: string };
   department?: { id: number; name: string };
+  permissions: string[];
 }
 
 export interface Case {

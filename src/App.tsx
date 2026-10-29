@@ -9,12 +9,21 @@ import CasesPage from './pages/dashboard/CasesPage';
 import UsersPage from './pages/dashboard/UsersPage';
 import ReportsPage from './pages/dashboard/ReportsPage'; 
 import CaseDetailPage from './pages/dashboard/CaseDetailPage';
+import { useHasPermission } from './api/hooks/usePermission';
 
 const queryClient = new QueryClient();
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+
+
+// ... existing imports ...
+
+const ProtectedRoute = ({ children, requiredPermission }: { children: React.ReactNode, requiredPermission?: string }) => {
   const user = useAuthStore((state) => state.user);
+  const hasPermission = useHasPermission(requiredPermission || '');
+  
   if (!user) return <Navigate to="/login" replace />;
+  if (requiredPermission && !hasPermission) return <Navigate to="/dashboard" replace />; 
+  
   return <AppLayout>{children}</AppLayout>;
 };
 
@@ -22,19 +31,23 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-      {/* WebSocketProvider MUST wrap the Routes */}
-      <WebSocketProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/cases" element={<ProtectedRoute><CasesPage /></ProtectedRoute>} />
-          <Route path="/cases/:id" element={<ProtectedRoute><CaseDetailPage /></ProtectedRoute>} />
-          <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
-          {/* Add this line below! */}
-          <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </WebSocketProvider>
+        <WebSocketProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            
+            {/* Dashboard NO LONGER requires cases.view */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+            
+            <Route path="/cases" element={<ProtectedRoute requiredPermission="cases.view"><CasesPage /></ProtectedRoute>} />
+            <Route path="/cases/:id" element={<ProtectedRoute requiredPermission="cases.view"><CaseDetailPage /></ProtectedRoute>} />
+            
+            <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UsersPage /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute requiredPermission="reports.view"><ReportsPage /></ProtectedRoute>} />
+            
+            {/* Catch-all redirects to dashboard */}
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </WebSocketProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
