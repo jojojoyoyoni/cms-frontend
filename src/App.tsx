@@ -6,7 +6,9 @@ import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import CasesPage from './pages/dashboard/CasesPage';
 import UsersPage from './pages/dashboard/UsersPage';
-import ReportsPage from './pages/dashboard/ReportsPage'; // <-- Make sure this is imported
+import ReportsPage from './pages/dashboard/ReportsPage'; 
+import CaseDetailPage from './pages/dashboard/CaseDetailPage';
+
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/cases" element={<ProtectedRoute><CasesPage /></ProtectedRoute>} />
+          <Route path="/cases/:id" element={<ProtectedRoute><CaseDetailPage /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UsersPage /></ProtectedRoute>} />
           {/* Add this line below! */}
           <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCases, useCreateCase, useUpdateCase, useDeleteCase  } from '../../api/hooks/useCases';
 import { useAuditLogs } from '../../api/hooks/useAudits';
 import type { Case } from '../../types/case';
+import { Link, useNavigate } from 'react-router-dom';
 
 
 export default function CasesPage() {
@@ -81,7 +82,12 @@ export default function CasesPage() {
         <tbody className="bg-white divide-y divide-gray-200">
           {cases?.map(caseItem => (
             <tr key={caseItem.id} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{caseItem.case_number}</td>
+              {/* <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">{caseItem.case_number}</td> */}
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
+                <Link to={`/cases/${caseItem.id}`} className="text-blue-600 hover:text-blue-800">
+                  {caseItem.case_number}
+                </Link>
+              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{caseItem.title}</td>
               <td className="px-6 py-4 whitespace-nowrap text-sm">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
