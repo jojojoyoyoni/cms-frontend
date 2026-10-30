@@ -2,11 +2,15 @@ import { type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/slices/authSlice';
 import NotificationBell from './NotificationBell';
+import { useThemeStore } from '../../store/slices/themeSlice';
+import Footer from './Footer';
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuthStore();
+  const { isDarkMode, toggleDarkMode } = useThemeStore();
   const location = useLocation();
   const navigate = useNavigate();
+  
 
   const navItems = [
 
@@ -32,10 +36,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar (Just Navigation) */}
-      <aside className="w-64 bg-gray-900 text-white flex flex-col">
-        <div className="p-4 border-b border-gray-800">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-900 dark:bg-gray-800 text-white flex flex-col">
+        <div className="p-4 border-b border-gray-800 dark:border-gray-700">
           <h1 className="text-xl font-bold">Enterprise CMS</h1>
         </div>
         
@@ -70,38 +74,50 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* Main Area (Header + Content) */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200 flex items-center justify-end px-6 py-3 gap-4">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 flex items-center justify-end px-6 py-3 gap-4 transition-colors duration-200">
+          {/* Dark Mode Toggle Button */}
+          <button 
+            onClick={toggleDarkMode}
+            className="text-gray-500 hover:text-yellow-500 dark:text-gray-400 dark:hover:text-yellow-400 transition-colors"
+            title="Toggle Dark Mode"
+          >
+            {isDarkMode ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            )}
+          </button>
           {/* Notification Bell */}
           <NotificationBell />
 
           {/* User Info & Logout */}
-          <div className="flex items-center gap-4 border-l pl-4">
+          <div className="flex items-center gap-4 border-l border-gray-200 dark:border-gray-700 pl-4">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{user?.username}</p>
-              <p className="text-xs text-gray-500">{user?.role.replace('_', ' ')}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{user?.username}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.role.replace('_', ' ')}</p>
             </div>
             
-            {/* User Avatar Placeholder */}
             <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">
               {user?.username?.charAt(0).toUpperCase()}
             </div>
 
-            <button 
-              onClick={handleLogout} 
-              className="text-gray-500 hover:text-red-600 transition-colors"
-              title="Logout"
-            >
+            <button onClick={handleLogout} className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500 transition-colors" title="Logout">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
             </button>
           </div>
         </header>
-
         {/* Main Content */}
-        <main className="flex-1 overflow-auto p-8">
+        <main className="flex-1 overflow-auto p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
           {children}
         </main>
+
+        <Footer />
       </div>
     </div>
   );

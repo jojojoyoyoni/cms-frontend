@@ -1,3 +1,10 @@
+export interface Manager {
+  id: number;
+  username: string;
+  email: string;
+}
+
+
 export interface Organization {
   id: number;
   name: string;
@@ -13,4 +20,5 @@ export interface Organization {
   created_at: string;
   user_count: number;
   case_count: number;
+  managers: Manager[];
 }
