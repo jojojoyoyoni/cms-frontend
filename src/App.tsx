@@ -11,6 +11,8 @@ import ReportsPage from './pages/dashboard/ReportsPage';
 import CaseDetailPage from './pages/dashboard/CaseDetailPage';
 import { useHasPermission } from './api/hooks/usePermission';
 import AuditLogsPage from './pages/dashboard/AuditLogsPage';
+import OrganizationsPage from './pages/admin/OrganizationsPage';
+
 
 
 const queryClient = new QueryClient();
@@ -43,6 +45,7 @@ export default function App() {
             <Route path="/reports" element={<ProtectedRoute requiredPermission="reports.view"><ReportsPage /></ProtectedRoute>} />
             {/* Add this line! */}
             <Route path="/audits" element={<ProtectedRoute requiredPermission="audits.view"><AuditLogsPage /></ProtectedRoute>} />
+            <Route path="/organizations" element={<ProtectedRoute requiredPermission="organizations.manage"><OrganizationsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </WebSocketProvider>
