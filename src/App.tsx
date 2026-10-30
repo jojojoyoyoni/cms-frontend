@@ -10,6 +10,8 @@ import UsersPage from './pages/dashboard/UsersPage';
 import ReportsPage from './pages/dashboard/ReportsPage'; 
 import CaseDetailPage from './pages/dashboard/CaseDetailPage';
 import { useHasPermission } from './api/hooks/usePermission';
+import AuditLogsPage from './pages/dashboard/AuditLogsPage';
+
 
 const queryClient = new QueryClient();
 
@@ -34,17 +36,13 @@ export default function App() {
         <WebSocketProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            
-            {/* Dashboard NO LONGER requires cases.view */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-            
             <Route path="/cases" element={<ProtectedRoute requiredPermission="cases.view"><CasesPage /></ProtectedRoute>} />
             <Route path="/cases/:id" element={<ProtectedRoute requiredPermission="cases.view"><CaseDetailPage /></ProtectedRoute>} />
-            
             <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UsersPage /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute requiredPermission="reports.view"><ReportsPage /></ProtectedRoute>} />
-            
-            {/* Catch-all redirects to dashboard */}
+            {/* Add this line! */}
+            <Route path="/audits" element={<ProtectedRoute requiredPermission="audits.view"><AuditLogsPage /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </WebSocketProvider>

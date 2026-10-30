@@ -9,16 +9,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
 
   const navItems = [
-    // Super Admin sees only Platform Management
-    { label: 'Organizations', path: '/organizations', roles: ['SUPERADMIN'], icon: '🏛️' },
-    { label: 'Manage Users', path: '/users', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '👥' },
-    { label: 'Audit Logs', path: '/audits', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '📜' },
-    
-    // Org Admin, Team Leader, Analyst see operational links
-    { label: 'Dashboard', path: '/dashboard', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '🏠' },
-    { label: 'Cases', path: '/cases', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '📁' },
-    { label: 'Reports', path: '/reports', roles: ['ORG_ADMIN', 'TEAM_LEADER'], icon: '📊' },
+
+        // Operations Section
+    { section: 'Operations', label: 'Dashboard', path: '/dashboard', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '🏠' },
+    { section: 'Operations', label: 'Cases', path: '/cases', roles: ['ORG_ADMIN', 'TEAM_LEADER', 'ANALYST'], icon: '📁' },
+    { section: 'Operations', label: 'Reports', path: '/reports', roles: ['ORG_ADMIN', 'TEAM_LEADER'], icon: '📊' },
+  
+    // Platform Management Section
+    { section: 'Platform Management', label: 'Organizations', path: '/organizations', roles: ['SUPERADMIN'], icon: '🏛️' },
+    { section: 'Platform Management', label: 'Manage Users', path: '/users', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '👥' },
+    { section: 'Platform Management', label: 'Audit Logs', path: '/audits', roles: ['SUPERADMIN', 'ORG_ADMIN'], icon: '📜' },
   ];
+
+  const visibleItems = navItems.filter(item => user && item.roles.includes(user.role));
+  
+  // Get unique sections
+  const sections = Array.from(new Set(visibleItems.map(item => item.section)));
 
   const handleLogout = () => {
     logout();
@@ -32,20 +38,32 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="p-4 border-b border-gray-800">
           <h1 className="text-xl font-bold">Enterprise CMS</h1>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
-          {navItems
-            .filter(item => user && item.roles.includes(user.role))
-            .map(item => (
-              <Link 
-                key={item.path} 
-                to={item.path} 
-                className={`block p-2 rounded transition-colors ${
-                  location.pathname === item.path ? 'bg-gray-700' : 'hover:bg-gray-700'
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+        
+        <nav className="flex-1 p-4 space-y-6 overflow-y-auto">
+          {sections.map(section => (
+            <div key={section}>
+              {/* Section Header */}
+              <h3 className="px-2 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {section}
+              </h3>
+              
+              {/* Section Links */}
+              <div className="space-y-1">
+                {visibleItems.filter(item => item.section === section).map(item => (
+                  <Link 
+                    key={item.path} 
+                    to={item.path} 
+                    className={`flex items-center gap-3 p-2 rounded transition-colors ${
+                      location.pathname === item.path ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
       </aside>
 
