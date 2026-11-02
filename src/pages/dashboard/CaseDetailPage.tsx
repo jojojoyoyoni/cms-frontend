@@ -1,16 +1,22 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useCases } from '../../api/hooks/useCases';
+import { useCases, useRequestClosure, useApproveClosure, useRejectClosure } from '../../api/hooks/useCases';
+import { useAuthStore } from '../../store/slices/authSlice';
 import { useCaseNotes, useCreateCaseNote } from '../../api/hooks/useCaseNotes';
 import { useCaseDocuments, useUploadCaseDocument } from '../../api/hooks/useCaseDocuments';
 import { useAuditLogs } from '../../api/hooks/useAudits';
-
+import { useUsers } from '../../api/hooks/useUsers';
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
+
+  const { user } = useAuthStore();
+
   const caseId = Number(id);
   
   const { data: cases } = useCases();
   const caseItem = cases?.find(c => c.id === caseId);
+  
+  const { data: users } = useUsers();
 
   const { data: notes } = useCaseNotes(caseId);
   const createNoteMutation = useCreateCaseNote();
@@ -21,7 +27,15 @@ export default function CaseDetailPage() {
   const [noteContent, setNoteContent] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const handleAddNote = (e: React.FormEvent) => {
+  const requestClosureMutation = useRequestClosure();
+  const approveClosureMutation = useApproveClosure();
+
+  const rejectClosureMutation = useRejectClosure();
+  const [closureNotes, setClosureNotes] = useState('');
+
+  const [showClosureModal, setShowClosureModal] = useState(false);
+
+  const handleAddNote = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!caseItem) return;
     createNoteMutation.mutate({ case: caseId, content: noteContent, is_internal: true }, {
@@ -29,7 +43,7 @@ export default function CaseDetailPage() {
     });
   };
 
-  const handleFileUpload = (e: React.FormEvent) => {
+  const handleFileUpload = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!selectedFile) return;
     const formData = new FormData();
@@ -37,6 +51,16 @@ export default function CaseDetailPage() {
     formData.append('file', selectedFile);
     uploadDocumentMutation.mutate(formData, {
       onSuccess: () => setSelectedFile(null)
+    });
+  };
+
+  const handleRequestClosure = () => {
+    if (!caseItem) return; // Add this safety check
+    requestClosureMutation.mutate({ id: caseItem.id, notes: closureNotes }, {
+      onSuccess: () => {
+        setShowClosureModal(false);
+        setClosureNotes('');
+      }
     });
   };
 
@@ -79,10 +103,82 @@ export default function CaseDetailPage() {
         <div className="grid grid-cols-4 gap-4 border-t pt-4 text-sm">
           <div><p className="text-gray-500">Due Date</p><p className="font-medium text-gray-900">{caseItem.due_date ? new Date(caseItem.due_date).toLocaleString() : 'N/A'}</p></div>
           <div><p className="text-gray-500">Created</p><p className="font-medium text-gray-900">{new Date(caseItem.created_at).toLocaleDateString()}</p></div>
-          <div><p className="text-gray-500">Assigned To</p><p className="font-medium text-gray-900">{caseItem.assigned_to || 'Unassigned'}</p></div>
-          <div><p className="text-gray-500">Department</p><p className="font-medium text-gray-900">{caseItem.department || 'N/A'}</p></div>
+          {/* <div><p className="text-gray-500">Assigned To</p><p className="font-medium text-gray-900">{caseItem.assigned_to || 'Unassigned'}</p></div>
+          <div><p className="text-gray-500">Department</p><p className="font-medium text-gray-900">{caseItem.department || 'N/A'}</p></div> */}
+          <div><p className="text-gray-500">Assigned To</p><p className="font-medium text-gray-900">{typeof caseItem.assigned_to === 'object' && caseItem.assigned_to ? caseItem.assigned_to.username : caseItem.assigned_to || 'Unassigned'}</p></div>
+          <div><p className="text-gray-500">Department</p><p className="font-medium text-gray-900">{typeof caseItem.department === 'object' && caseItem.department ? caseItem.department.name : caseItem.department || 'N/A'}</p></div>
         </div>
       </div>
+
+      {/* // Add this section right below the Case Header div: */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Case Actions</h2>
+        
+        <div className="flex flex-wrap gap-3">
+          {/* Analyst: Request Closure (Available when OPEN or IN_PROGRESS) */}
+          {caseItem.status !== 'CLOSED' && caseItem.status !== 'PENDING_APPROVAL' && (
+            <button 
+              onClick={() => setShowClosureModal(true)}
+              className="bg-yellow-500 text-white px-4 py-2 rounded text-sm hover:bg-yellow-600 transition-colors"
+            >
+              Request Closure
+            </button>
+          )}
+
+          {/* Team Leader/Org Admin: Approve Closure (Available when PENDING_APPROVAL) */}
+          {caseItem.status === 'PENDING_APPROVAL' && user?.role !== 'ANALYST' && (
+            <>
+              <button 
+                onClick={() => approveClosureMutation.mutate(caseItem.id)}
+                className="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors"
+                disabled={approveClosureMutation.isPending}
+              >
+                {approveClosureMutation.isPending ? 'Approving...' : 'Approve Closure'}
+              </button>
+              <button 
+                onClick={() => rejectClosureMutation.mutate(caseItem.id)}
+                className="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700 transition-colors"
+                disabled={rejectClosureMutation.isPending}
+              >
+                {rejectClosureMutation.isPending ? 'Rejecting...' : 'Reject & Reopen'}
+              </button>
+            </>
+          )}
+
+          {/* Show Approval Info if Approved */}
+          {caseItem.status === 'CLOSED' && caseItem.approved_by && (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Approved by User #{caseItem.approved_by} on {new Date(caseItem.approved_at!).toLocaleString()}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Closure Request Modal */}
+      {showClosureModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-96">
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Request Case Closure</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">This will send the case to your Team Leader for approval.</p>
+            <textarea 
+              value={closureNotes}
+              onChange={(e) => setClosureNotes(e.target.value)}
+              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 h-24 mb-4"
+              placeholder="Add resolution notes..."
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowClosureModal(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+              <button 
+                onClick={handleRequestClosure}
+                className="bg-yellow-500 text-white px-4 py-2 rounded text-sm hover:bg-yellow-600"
+                disabled={requestClosureMutation.isPending}
+              >
+                {requestClosureMutation.isPending ? 'Submitting...' : 'Submit Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="grid grid-cols-2 gap-6">
         {/* Case Notes */}

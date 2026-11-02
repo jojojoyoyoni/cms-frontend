@@ -116,7 +116,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 overflow-auto p-8 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
           {children}
         </main>
-
         <Footer />
       </div>
     </div>

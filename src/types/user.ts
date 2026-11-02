@@ -5,6 +5,9 @@ export interface User {
   role: 'SUPERADMIN' | 'ORG_ADMIN' | 'TEAM_LEADER' | 'ANALYST';
   organization?: { id: number; name: string };
   department?: { id: number; name: string };
+  is_active?: boolean; // Add these
+  last_login?: string | null;
+  date_joined?: string;
   permissions: string[];
 }
 

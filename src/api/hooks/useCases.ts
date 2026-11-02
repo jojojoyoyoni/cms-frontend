@@ -42,3 +42,28 @@ export const useDeleteCase = () => {
   });
 };
 
+import { requestCaseClosure, approveCaseClosure, rejectCaseClosure } from '../queries/caseQueries';
+
+export const useRequestClosure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: number, notes: string }) => requestCaseClosure(id, notes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cases'] }),
+  });
+};
+
+export const useApproveClosure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => approveCaseClosure(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cases'] }),
+  });
+};
+
+export const useRejectClosure = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => rejectCaseClosure(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['cases'] }),
+  });
+};
