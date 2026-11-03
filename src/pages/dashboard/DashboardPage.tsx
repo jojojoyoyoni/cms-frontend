@@ -1,5 +1,6 @@
 import StatsCards from '../../components/dashboard/StatsCards';
 import AnalystDashboard from './AnalystDashboard';
+import TeamLeaderDashboard from './TeamLeaderDashboard';
 import { useAuthStore } from '../../store/slices/authSlice';
 import { useHasPermission } from '../../api/hooks/usePermission';
 import { Link } from 'react-router-dom';
@@ -17,11 +18,13 @@ export default function DashboardPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, {user?.username}</p>
       </div>
 
-      {/* Analyst Dashboard */}
+      {/* Role-based Dashboards */}
       {user?.role === 'ANALYST' ? (
         <AnalystDashboard />
+      ) : user?.role === 'TEAM_LEADER' ? (
+        <TeamLeaderDashboard />
       ) : canViewCases ? (
-        // Org Admin / Team Leader View
+        // Org Admin View
         <>
           <StatsCards />
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mt-6 transition-colors duration-200">

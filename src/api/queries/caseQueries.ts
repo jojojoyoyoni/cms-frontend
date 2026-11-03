@@ -6,7 +6,11 @@ export const fetchCases = async (): Promise<Case[]> => {
   return response.data;
 };
 
-export const createCase = async (caseData: { title: string; description: string; status: string }): Promise<Case> => {
+// export const createCase = async (caseData: { title: string; description: string; status: string }): Promise<Case> => {
+//   const response = await client.post('/cases/', caseData);
+//   return response.data;
+// };
+export const createCase = async (caseData: Partial<Case>): Promise<Case> => {
   const response = await client.post('/cases/', caseData);
   return response.data;
 };
