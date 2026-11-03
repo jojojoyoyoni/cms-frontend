@@ -2,7 +2,9 @@ import StatsCards from '../../components/dashboard/StatsCards';
 import { useCases } from '../../api/hooks/useCases';
 
 export default function ReportsPage() {
-  const { data: cases, isLoading } = useCases();
+  // const { data: cases, isLoading } = useCases();
+  const { data: paginatedData, isLoading } = useCases();
+  const cases = paginatedData?.results || [];
 
   if (isLoading) return <div className="animate-pulse text-gray-500">Generating report...</div>;
 

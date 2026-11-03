@@ -5,7 +5,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import type { Case } from '../../types/case';
 
 export default function TeamLeaderDashboard() {
-  const { data: cases, isLoading } = useCases();
+  // const { data: cases, isLoading } = useCases();
+  const { data: paginatedData, isLoading } = useCases();
+  const cases = paginatedData?.results || [];
   const { isDarkMode } = useThemeStore();
   const textColor = isDarkMode ? '#9ca3af' : '#4b5563';
   const gridColor = isDarkMode ? '#374151' : '#e5e7eb';

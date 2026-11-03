@@ -5,7 +5,9 @@ import { useThemeStore } from '../../store/slices/themeSlice';
 import { PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 export default function AnalystDashboard() {
-  const { data: cases, isLoading } = useCases();
+  // const { data: cases, isLoading } = useCases();
+  const { data: paginatedData, isLoading } = useCases();
+  const cases = paginatedData?.results || [];
   const { isDarkMode } = useThemeStore();
   const textColor = isDarkMode ? '#9ca3af' : '#4b5563';
   const gridColor = isDarkMode ? '#374151' : '#e5e7eb';

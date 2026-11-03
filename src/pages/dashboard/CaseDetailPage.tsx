@@ -5,7 +5,6 @@ import { useAuthStore } from '../../store/slices/authSlice';
 import { useCaseNotes, useCreateCaseNote } from '../../api/hooks/useCaseNotes';
 import { useCaseDocuments, useUploadCaseDocument } from '../../api/hooks/useCaseDocuments';
 import { useAuditLogs } from '../../api/hooks/useAudits';
-import { useUsers } from '../../api/hooks/useUsers';
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -13,10 +12,11 @@ export default function CaseDetailPage() {
 
   const caseId = Number(id);
   
-  const { data: cases } = useCases();
+  // const { data: cases } = useCases();
+  const { data: paginatedData, isLoading } = useCases();
+  const cases = paginatedData?.results || [];
   const caseItem = cases?.find(c => c.id === caseId);
   
-  const { data: users } = useUsers();
 
   const { data: notes } = useCaseNotes(caseId);
   const createNoteMutation = useCreateCaseNote();
