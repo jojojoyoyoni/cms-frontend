@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { useCases } from '../../api/hooks/useCases';
+import { useSendReport } from '../../api/hooks/useReports';
 import { Link } from 'react-router-dom';
 import type { Case } from '../../types/case';
 import { useThemeStore } from '../../store/slices/themeSlice';
@@ -14,6 +16,11 @@ export default function AnalystDashboard() {
 
   if (isLoading || !cases) return <div className="animate-pulse text-gray-500 dark:text-gray-400">Loading your dashboard...</div>;
 
+  const sendReportMutation = useSendReport();
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportMessage, setReportMessage] = useState('');
+  const [reportSuccess, setReportSuccess] = useState(false);
+  
   // Calculate Stats
   const myOpenCases = cases.filter(c => c.status === 'OPEN' || c.status === 'IN_PROGRESS');
   const myPendingApprovals = cases.filter(c => c.status === 'PENDING_APPROVAL');
@@ -66,6 +73,16 @@ export default function AnalystDashboard() {
 
   const tooltipStyle = { backgroundColor: isDarkMode ? '#1f2937' : '#ffffff', border: `1px solid ${gridColor}`, borderRadius: '0.5rem', color: isDarkMode ? '#f3f4f6' : '#111827' };
 
+  const handleSendReport = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    sendReportMutation.mutate(reportMessage, {
+      onSuccess: () => {
+        setReportSuccess(true);
+        setReportMessage('');
+        setTimeout(() => { setReportSuccess(false); setShowReportModal(false); }, 2000);
+      }
+    });
+  };
   return (
     <div className="space-y-6">
       {/* Smart Insights Banner */}
@@ -189,7 +206,45 @@ export default function AnalystDashboard() {
             </div>
           </div>
         </div>
+          <button 
+              onClick={() => setShowReportModal(true)}
+              className="block w-full bg-purple-600 text-white text-center px-4 py-3 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors"
+            >
+              📧 Submit Report to Boss
+         </button>
+        
       </div>
+            {/* Send Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-96 transition-colors duration-200">
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-gray-100">Submit Report to Team Leader</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Write a summary of your work. This will be sent as a notification to your Team Leader.</p>
+            
+            {reportSuccess ? (
+              <div className="p-4 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-sm text-center">
+                ✅ Report sent successfully!
+              </div>
+            ) : (
+              <form onSubmit={handleSendReport}>
+                <textarea 
+                  value={reportMessage}
+                  onChange={(e) => setReportMessage(e.target.value)}
+                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 h-32 mb-4 text-sm"
+                  placeholder="E.g., I have completed 3 cases this week. Case #009 is pending approval..."
+                  required
+                />
+                <div className="flex justify-end gap-2">
+                  <button type="button" onClick={() => setShowReportModal(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                  <button type="submit" disabled={sendReportMutation.isPending} className="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700">
+                    {sendReportMutation.isPending ? 'Sending...' : 'Send Report'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

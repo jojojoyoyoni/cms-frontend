@@ -9,6 +9,8 @@ export interface User {
   last_login?: string | null;
   date_joined?: string;
   permissions: string[];
+  profile_picture?: string | null;
+  profile_picture_url?: string | null;
 }
 
 export interface Case {

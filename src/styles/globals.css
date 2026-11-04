@@ -5,3 +5,62 @@
 body {
   @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-200;
 }
+
+/* Print Styles */
+@media print {
+  html, body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  /* Ensure content fits the page width */
+  .max-w-4xl, .max-w-5xl, .max-w-7xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Avoid breaking inside cards/tables */
+  .bg-white, .bg-gray-800 {
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  
+  /* Ensure tables don't break across pages */
+  table {
+    page-break-inside: auto;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  /* Remove dark mode backgrounds when printing */
+  .dark\:bg-gray-800 {
+    background: white !important;
+  }
+
+  
+  /* Remove height restrictions when printing */
+  .h-screen {
+    height: auto !important;
+  }
+  
+  /* Ensure the main content takes full width */
+  main {
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* Scale down slightly to fit more content per page */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+}

@@ -9,7 +9,10 @@ import AppLayout from './components/layout/AppLayout';
 import LoginPage from './pages/auth/LoginPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import CasesPage from './pages/dashboard/CasesPage';
+
 import UsersPage from './pages/dashboard/UsersPage';
+import ProfilePage from './pages/dashboard/ProfilePage';
+
 import ReportsPage from './pages/dashboard/ReportsPage'; 
 import CaseDetailPage from './pages/dashboard/CaseDetailPage';
 import { useHasPermission } from './api/hooks/usePermission';
@@ -55,6 +58,7 @@ export default function App() {
             <Route path="/cases" element={<ProtectedRoute requiredPermission="cases.view"><CasesPage /></ProtectedRoute>} />
             <Route path="/cases/:id" element={<ProtectedRoute requiredPermission="cases.view"><CaseDetailPage /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute requiredPermission="users.manage"><UsersPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute requiredPermission="reports.view"><ReportsPage /></ProtectedRoute>} />
             {/* Add this line! */}
             <Route path="/audits" element={<ProtectedRoute requiredPermission="audits.view"><AuditLogsPage /></ProtectedRoute>} />

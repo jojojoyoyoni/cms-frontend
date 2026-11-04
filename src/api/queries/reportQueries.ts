@@ -11,3 +11,7 @@ export const fetchDashboardStats = async (): Promise<DashboardStats> => {
   const response = await client.get('/reports/dashboard/');
   return response.data;
 };
+
+export const sendReportToBoss = async (message: string): Promise<void> => {
+  await client.post('/reports/send-report/', { message });
+};
