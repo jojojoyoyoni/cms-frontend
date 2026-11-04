@@ -5,6 +5,10 @@ import { useAuthStore } from '../../store/slices/authSlice';
 import { useCaseNotes, useCreateCaseNote } from '../../api/hooks/useCaseNotes';
 import { useCaseDocuments, useUploadCaseDocument } from '../../api/hooks/useCaseDocuments';
 import { useAuditLogs } from '../../api/hooks/useAudits';
+
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../../api/hooks/useTasks';
+import type { Task } from '../../types/task';
+
 export default function CaseDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -35,6 +39,15 @@ export default function CaseDetailPage() {
 
   const [showClosureModal, setShowClosureModal] = useState(false);
 
+  const { data: tasks, isLoading: tasksLoading } = useTasks(caseId);
+  const createTaskMutation = useCreateTask();
+  const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask();
+  
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+  const [taskForm, setTaskForm] = useState({ title: '', description: '', priority: 'MEDIUM', due_date: '' });
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
   const handleAddNote = (e: React.SyntheticEvent) => {
     e.preventDefault();
     if (!caseItem) return;
@@ -63,6 +76,28 @@ export default function CaseDetailPage() {
       }
     });
   };
+
+    const handleTaskSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!caseItem) return;
+    const payload = {
+      case: caseId,
+      title: taskForm.title,
+      description: taskForm.description,
+      priority: taskForm.priority as Task['priority'],
+      due_date: taskForm.due_date || null,
+    };
+    if (editingTask) {
+      updateTaskMutation.mutate({ id: editingTask.id, data: payload }, { onSuccess: () => setTaskModalOpen(false) });
+    } else {
+      createTaskMutation.mutate(payload, { onSuccess: () => { setTaskModalOpen(false); setTaskForm({ title: '', description: '', priority: 'MEDIUM', due_date: '' }); } });
+    }
+  };
+
+  const handleTaskStatusChange = (task: Task, newStatus: Task['status']) => {
+    updateTaskMutation.mutate({ id: task.id, data: { status: newStatus, completed_at: newStatus === 'DONE' ? new Date().toISOString() : null } });
+  };
+
 
   if (!caseItem) return <div>Case not found. <Link to="/cases" className="text-blue-600">Go back</Link></div>;
 
@@ -229,6 +264,97 @@ export default function CaseDetailPage() {
           </div>
         </div>
       </div>
+
+            {/* Case Tasks */}
+      <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Case Tasks</h2>
+          <button onClick={() => { setEditingTask(null); setTaskForm({ title: '', description: '', priority: 'MEDIUM', due_date: '' }); setTaskModalOpen(true); }} className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Add Task</button>
+        </div>
+        
+        {tasksLoading ? (
+          <p className="text-sm text-gray-500">Loading tasks...</p>
+        ) : tasks && tasks.length > 0 ? (
+          <div className="space-y-2">
+            {tasks.map(task => (
+              <div key={task.id} className={`flex items-center gap-3 p-3 border rounded-lg ${task.status === 'DONE' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'}`}>
+                {/* Status Dropdown */}
+                <select 
+                  value={task.status} 
+                  onChange={(e) => handleTaskStatusChange(task, e.target.value as Task['status'])}
+                  className="text-xs border border-gray-300 dark:border-gray-600 rounded p-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                >
+                  <option value="TO_DO">To Do</option>
+                  <option value="IN_PROGRESS">In Progress</option>
+                  <option value="DONE">Done</option>
+                  <option value="BLOCKED">Blocked</option>
+                </select>
+                
+                {/* Task Info */}
+                <div className="flex-1">
+                  <p className={`text-sm font-medium text-gray-900 dark:text-gray-100 ${task.status === 'DONE' ? 'line-through text-gray-400' : ''}`}>{task.title}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {task.assigned_to ? `Assigned: ${task.assigned_to}` : 'Unassigned'} 
+                    {task.due_date ? ` · Due: ${new Date(task.due_date).toLocaleDateString()}` : ''}
+                  </p>
+                </div>
+                
+                {/* Priority Badge */}
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
+                  task.priority === 'URGENT' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' :
+                  task.priority === 'HIGH' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300' :
+                  task.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' :
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                }`}>{task.priority}</span>
+                
+                {/* Actions */}
+                <button onClick={() => { setEditingTask(task); setTaskForm({ title: task.title, description: task.description || '', priority: task.priority, due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '' }); setTaskModalOpen(true); }} className="text-gray-500 hover:text-gray-700 text-xs">Edit</button>
+                <button onClick={() => deleteTaskMutation.mutate(task.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No tasks yet. Break down this case into smaller tasks!</p>
+        )}
+      </div>
+
+      {/* Task Modal */}
+      {taskModalOpen && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-black dark:bg-opacity-70 flex justify-center items-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-96">
+            <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">{editingTask ? 'Edit Task' : 'Add Task'}</h3>
+            <form onSubmit={handleTaskSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Title</label>
+                <input type="text" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Description</label>
+                <textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 h-20" />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Priority</label>
+                  <select value={taskForm.priority} onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value })} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <option value="LOW">Low</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="HIGH">High</option>
+                    <option value="URGENT">Urgent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Due Date</label>
+                  <input type="datetime-local" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setTaskModalOpen(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2 rounded text-sm hover:bg-gray-300 dark:hover:bg-gray-600">Cancel</button>
+                <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">{createTaskMutation.isPending || updateTaskMutation.isPending ? 'Saving...' : 'Save'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Activity Timeline (Audit Log) */}
       <div className="bg-white shadow rounded-lg p-6">

@@ -18,6 +18,10 @@ import CaseDetailPage from './pages/dashboard/CaseDetailPage';
 import { useHasPermission } from './api/hooks/usePermission';
 import AuditLogsPage from './pages/dashboard/AuditLogsPage';
 import OrganizationsPage from './pages/admin/OrganizationsPage';
+import PlaceholderPage from './pages/dashboard/PlaceholderPage';
+import TasksPage from './pages/dashboard/TasksPage';
+
+
 
 
 
@@ -63,6 +67,16 @@ export default function App() {
             {/* Add this line! */}
             <Route path="/audits" element={<ProtectedRoute requiredPermission="audits.view"><AuditLogsPage /></ProtectedRoute>} />
             <Route path="/organizations" element={<ProtectedRoute requiredPermission="organizations.manage"><OrganizationsPage /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><TasksPage /></ProtectedRoute>} />
+
+            <Route path="/about" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/products" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/news" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/documents" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/tasks-request" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+            <Route path="/contact" element={<ProtectedRoute><PlaceholderPage /></ProtectedRoute>} />
+
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </WebSocketProvider>
