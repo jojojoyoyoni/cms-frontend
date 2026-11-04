@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/slices/authSlice';
 import { useCaseNotes, useCreateCaseNote } from '../../api/hooks/useCaseNotes';
 import { useCaseDocuments, useUploadCaseDocument } from '../../api/hooks/useCaseDocuments';
 import { useAuditLogs } from '../../api/hooks/useAudits';
+import DueStatusBadge from '../../components/tasks/DueStatusBadge';
 
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '../../api/hooks/useTasks';
 import type { Task } from '../../types/task';
@@ -277,8 +278,8 @@ export default function CaseDetailPage() {
         ) : tasks && tasks.length > 0 ? (
           <div className="space-y-2">
             {tasks.map(task => (
-              <div key={task.id} className={`flex items-center gap-3 p-3 border rounded-lg ${task.status === 'DONE' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'border-gray-200 dark:border-gray-700'}`}>
-                {/* Status Dropdown */}
+              <div key={task.id} className={`flex items-center gap-3 p-3 border rounded-lg ${task.status === 'DONE' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : task.due_status === 'OVERDUE' ? 'border-gray-200 dark:border-gray-700 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/10' : task.due_status === 'DUE_SOON' ? 'border-gray-200 dark:border-gray-700 border-l-4 border-l-yellow-500' : 'border-gray-200 dark:border-gray-700'}`}>
+                 {/* Status Dropdown */}
                 <select 
                   value={task.status} 
                   onChange={(e) => handleTaskStatusChange(task, e.target.value as Task['status'])}
@@ -297,6 +298,9 @@ export default function CaseDetailPage() {
                     {task.assigned_to ? `Assigned: ${task.assigned_to}` : 'Unassigned'} 
                     {task.due_date ? ` · Due: ${new Date(task.due_date).toLocaleDateString()}` : ''}
                   </p>
+                  {task.due_status && (
+                    <div className="mt-1"><DueStatusBadge dueStatus={task.due_status} /></div>
+                  )}
                 </div>
                 
                 {/* Priority Badge */}

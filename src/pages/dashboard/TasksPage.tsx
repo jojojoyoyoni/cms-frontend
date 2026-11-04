@@ -4,6 +4,8 @@ import { useCases } from '../../api/hooks/useCases';
 import { useUsers } from '../../api/hooks/useUsers';
 import { useAuthStore } from '../../store/slices/authSlice';
 import type { Task } from '../../types/task';
+import DueStatusBadge from '../../components/tasks/DueStatusBadge';
+import KanbanBoard from '../../components/tasks/KanbanBoard';
 import { Link } from 'react-router-dom';
 
 export default function TasksPage() {
@@ -29,6 +31,8 @@ export default function TasksPage() {
 
   const canAssign = user?.role === 'ORG_ADMIN' || user?.role === 'TEAM_LEADER';
   const canDelete = user?.role === 'ORG_ADMIN' || user?.role === 'TEAM_LEADER';
+
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
@@ -88,6 +92,16 @@ export default function TasksPage() {
     setIsModalOpen(true);
   };
 
+  const handleKanbanStatusChange = (taskId: number, newStatus: Task['status']) => {
+    updateTaskMutation.mutate({ 
+      id: taskId, 
+      data: { 
+        status: newStatus, 
+        completed_at: newStatus === 'DONE' ? new Date().toISOString() : null 
+      } 
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload: Partial<Task> = {
@@ -116,8 +130,27 @@ export default function TasksPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Manage case sub-tasks and action items</p>
         </div>
-        <button onClick={openCreateModal} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">+ New Task</button>
+        <div className="flex items-center gap-3">
+          {/* View Toggle */}
+          <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button 
+              onClick={() => setViewMode('list')} 
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${viewMode === 'list' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              📋 List
+            </button>
+            <button 
+              onClick={() => setViewMode('board')} 
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${viewMode === 'board' ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+            >
+              🗂️ Board
+            </button>
+          </div>
+          <button onClick={openCreateModal} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">+ New Task</button>
+        </div>
       </div>
+
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -151,7 +184,10 @@ export default function TasksPage() {
       </div>
 
       {/* Tasks Table */}
-      <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+       {viewMode === 'board' ? (
+        <KanbanBoard tasks={filteredTasks} onStatusChange={handleKanbanStatusChange} />
+      ) : (
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
@@ -165,8 +201,10 @@ export default function TasksPage() {
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            {filteredTasks.map(task => (
-              <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            {filteredTasks.map(task => {
+              const dueStatus = task.due_status;
+              return (
+              <tr key={task.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${dueStatus === 'OVERDUE' ? 'border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/10' : dueStatus === 'DUE_SOON' ? 'border-l-4 border-l-yellow-500' : ''}`}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{task.title}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs">{task.description}</p>
@@ -188,19 +226,28 @@ export default function TasksPage() {
                     <option value="BLOCKED">Blocked</option>
                   </select>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{task.due_date ? new Date(task.due_date).toLocaleDateString() : 'N/A'}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {task.due_date ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-gray-500 dark:text-gray-400">{new Date(task.due_date).toLocaleDateString()}</span>
+                      <DueStatusBadge dueStatus={task.due_status} />
+                    </div>
+                  ) : <span className="text-gray-400">N/A</span>}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm flex gap-2">
                   <button onClick={() => openEditModal(task)} className="text-gray-600 dark:text-gray-400 hover:text-gray-800 text-xs font-medium">Edit</button>
                   {canDelete && <button onClick={() => deleteTaskMutation.mutate(task.id)} className="text-red-600 dark:text-red-400 hover:text-red-800 text-xs font-medium">Delete</button>}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
         {filteredTasks.length === 0 && (
           <div className="text-center py-12"><p className="text-gray-400 text-4xl mb-2">📋</p><p className="text-sm text-gray-500 dark:text-gray-400">No tasks found.</p></div>
         )}
       </div>
+      )}
 
       {/* Create/Edit Task Modal */}
       {isModalOpen && (
